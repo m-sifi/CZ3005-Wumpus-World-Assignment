@@ -1,7 +1,5 @@
 
 :- dynamic([
-    agent_location/2,
-    agent_orientation/1,
     agent_arrow/0,
     agent_actions/1,
 
@@ -43,12 +41,11 @@ reborn :-
     assertz(agent_arrow).
 
 move(moveforward, [Confounded, Stench, Tingle, Glitter, Bump, Scream]) :-
-    handle_percept([Confounded, Stench, Tingle, Glitter, Bump, Scream]),
-    update_agent(Bump).
+    update_agent(Bump),
+    handle_percept([Confounded, Stench, Tingle, Glitter, Bump, Scream]).
 
 reposition(L) :- 
-    retractall(agent_location(_, _)),
-    retractall(agent_orientation(_)),
+    retractall(current(_, _, _)),
 
     retractall(visited(_, _)),
     retractall(wumpus(_, _)),
@@ -59,8 +56,7 @@ reposition(L) :-
     retractall(safe(_, _)),
     retractall(wall(_, _)),
 
-    assertz(agent_location(0, 0)),
-    assertz(agent_orientation(rnorth)),
+    assertz(current(0, 0, rnorth)),
     handle_percept(L),
 
     assertz(visited(0, 0)),
@@ -100,10 +96,6 @@ explore(X, Y, D, [PossibleAction|L], Visited) :-
 %     current(0, 0, _),
 %     append([], [], L).
 
-current(X, Y, D) :-
-    agent_location(X, Y),
-    agent_orientation(D).
-
 % For naming consistency sake, hasarrow is an alias for agent_arrow.
 hasarrow :- agent_arrow.
 
@@ -123,7 +115,11 @@ possible(_, moveforward).
 % Mapping 
 %
 
-update_agent(on).
+update_agent(on) :-
+    current(X, Y, D),
+    execute(moveforward, X, Y, D, X1, Y1, _),
+    assertz(wall(X1, Y1)),
+    retractall(safe(X1, Y1)).
 
 update_agent(off) :-
     current(X, Y, D),
@@ -177,16 +173,14 @@ confound(on) :-
     retractall(glitter(_, _)),
     retractall(stentch(_, _)),
 
-    retractall(agent_location(_, _)),
-    retractall(agent_orientation(_)),
-    assertz(agent_location(0, 0)),
-    assertz(agent_orientation(rnorth)).
+    retractall(current(_, _, _)),
+    assertz(current(0, 0, rnorth)).
 
 confound(off).
 
 % Stench Status
 stench(on) :-
-    agent_location(X, Y),
+    current(X, Y, _),
     XR is X + 1, assume_wumpus(on, XR, Y),
     XL is X - 1, assume_wumpus(on, XL, Y),
     YU is Y + 1, assume_wumpus(on, X, YU),
@@ -194,7 +188,7 @@ stench(on) :-
     true.
 
 stench(off) :-
-    agent_location(X, Y),
+    current(X, Y, _),
     XR is X + 1, assume_wumpus(off, XR, Y),
     XL is X - 1, assume_wumpus(off, XL, Y),
     YU is Y + 1, assume_wumpus(off, X, YU),
@@ -203,7 +197,7 @@ stench(off) :-
 
 % Tingle Status
 tingle(on) :-
-    agent_location(X, Y),
+    current(X, Y, _),
     XR is X + 1, assume_portal(on, XR, Y),
     XL is X - 1, assume_portal(on, XL, Y),
     YU is Y + 1, assume_portal(on, X, YU),
@@ -211,7 +205,7 @@ tingle(on) :-
     true.
 
 tingle(off) :-
-    agent_location(X, Y),
+    current(X, Y, _),
     XR is X + 1, assume_portal(off, XR, Y),
     XL is X - 1, assume_portal(off, XL, Y),
     YU is Y + 1, assume_portal(off, X, YU),
@@ -220,11 +214,11 @@ tingle(off) :-
 
 % Glitter Status
 glitter(on) :-
-    agent_location(X, Y),
+    current(X, Y, _),
     assertz(glitter(X, Y)).
 
 glitter(off) :-
-    agent_location(X, Y),
+    current(X, Y, _),
     retractall(glitter(X, Y)).
 
 % Bump Status
