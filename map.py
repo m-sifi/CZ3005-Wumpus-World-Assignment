@@ -38,6 +38,11 @@ class Percept():
         return f"[{convert(self.confounded)}, {convert(self.stench)}, {convert(self.tingle)}, {convert(self.glitter)}, {convert(self.bump)}, {convert(self.scream)}]" 
 
 @dataclass
+class Cell():
+    percept : Percept = Percept()
+    state: State = State.UNKNOWN
+
+@dataclass
 class Agent():
     x : int = 1
     y : int = 1
@@ -191,19 +196,19 @@ class RelativeMap():
         self.reset()
     
     def reset_state(self):
-        for coordinate, percept in self.path.items():
+        for coordinate, cell in self.path.items():
             # clear if has state BUMP or SCREAM or CONFOUNDED
-            percept.confounded = False
-            percept.bump = False
-            percept.scream = False
-
-            self.path[coordinate] = percept
+            cell.percept.confounded = False
+            cell.percept.bump = False
+            cell.percept.scream = False
 
     def reset(self):
         percept = Percept()
         percept.confounded = True
 
-        self.path = {(0, 0) : percept}
+        initial_cell = Cell(percept, State.SAFE_VISITED)
+
+        self.path = {(0, 0) : initial_cell}
         self.agent = Agent(0, 0, Direction.NORTH)
 
     def __size(self):
@@ -225,20 +230,20 @@ class RelativeMap():
 
         mid = floor(size / 2)
 
-        for coordinate, percept in self.path.items():
+        for coordinate, cell in self.path.items():
             x, y = coordinate
             symbols = [ "·" for x in range(9) ]
 
-            if percept.confounded:
+            if cell.percept.confounded:
                 symbols[0] = "%"
 
-            if percept.stench:
+            if cell.percept.stench:
                 symbols[1] = "="
 
-            if percept.tingle:
+            if cell.percept.tingle:
                 symbols[2] = "T"
 
-            if percept.glitter:
+            if cell.percept.glitter:
                 symbols[6] = "*"
 
             # Absolute Map will never show bump but we keep this here so I can reference later :)
@@ -253,10 +258,17 @@ class RelativeMap():
             symbols[3] = " "
             symbols[4] = "?"
             symbols[5] = " "
-            # if self.data[y][x] == EntityType.WUMPUS:
-            #     symbols[3] = "-"
-            #     symbols[4] = "W"
-            #     symbols[5] = "-"
+
+            if cell.state == State.WUMPUS:
+                symbols[3] = "-"
+                symbols[4] = "W"
+                symbols[5] = "-"
+            elif cell.state == State.PORTAL:
+                symbols[4] = "O"
+            elif cell.state == State.SAFE_VISITED:
+                symbols[4] = "S"
+            elif cell.state == State.SAFE_UNVISITED:
+                symbols[4] = "s"
 
             if self.agent.x == x and self.agent.y == y:
                 symbols[3] = "-"

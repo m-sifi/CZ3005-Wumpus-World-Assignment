@@ -27,7 +27,10 @@ class WumpusDriver():
 
     def update(self, percept):
         self.pl_current()
-        self.relative.path[(self.relative.agent.x, self.relative.agent.y)] = percept
+        self.pl_safe()
+
+        cell = Cell(percept)
+        self.relative.path[(self.relative.agent.x, self.relative.agent.y)] = cell
 
     def reset(self):
         self.relative = RelativeMap()
@@ -35,6 +38,8 @@ class WumpusDriver():
 
         call(reborn())
         self.map.reset()
+
+        self.update(Percept(confounded=True))
 
     def pl_current(self):
         current = Functor("current", 3)
@@ -62,4 +67,18 @@ class WumpusDriver():
         self.map.agent.x = x
         self.map.agent.y = y
 
+        q.closeQuery()
+
+    def pl_safe(self):
+        safe = Functor("safe", 2)
+        X = Variable()
+        Y = Variable()
+
+        q = Query(safe(X, Y))
+
+        while q.nextSolution():
+            print(X.value, Y.value)
+            cell = Cell(state=State.SAFE_UNVISITED)
+            self.relative.path[(X.value, Y.value)] = cell
+            
         q.closeQuery()
