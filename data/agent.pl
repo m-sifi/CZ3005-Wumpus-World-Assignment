@@ -1,18 +1,19 @@
 
 :- dynamic([
-   agent_location/2,
-   agent_orientation/1,
-   agent_arrow/0,
-   agent_actions/1,
+    agent_location/2,
+    agent_orientation/1,
+    agent_arrow/0,
+    agent_actions/1,
 
-   wumpus/2,
-   confundus/2,
-   tingle/2,
-   glitter/2,
-   stentch/2,
+    wumpus/2,
+    confundus/2,
+    tingle/2,
+    glitter/2,
+    stentch/2,
 
-   visited/2,
-   safe/2
+    current/3,
+    visited/2,
+    safe/2
 ]).
 
 agent_actions([]).
@@ -122,14 +123,13 @@ possible(_, moveforward).
 % Mapping 
 %
 
-isAdjacent(X,Y, XT, YT) :-
-    (X =:= XT, Y =:= YT+1);
-    (X =:= XT, Y =:= YT-1);
-    (X =:= XT+1, Y =:= YT);
-    (X =:= XT-1, Y =:= YT).
-
 update_agent(on).
-update_agent(off).
+
+update_agent(off) :-
+    current(X, Y, D),
+    execute(moveforward, X, Y, D, X1, Y1, _),
+    retractall(current(_, _, _)),
+    assertz(current(X1, Y1, D)).
 
 execute(moveforward, X, Y, rnorth, X1, Y1, _) :-
     X1 is X, 
