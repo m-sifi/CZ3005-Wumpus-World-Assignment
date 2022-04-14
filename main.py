@@ -1,5 +1,6 @@
 import sys
 from map import *
+from driver import *
 from pyswip.easy import *
 from pyswip import Prolog
 
@@ -24,31 +25,44 @@ def print_help():
     print_command("pickup")
     print()
 
+def move_forward(world: Map):
+    prolog = Prolog()
+    pl_move = Functor("move", 2)
+    percept = world.percept(world.agent.x, world.agent.y)
+
+    forward_x, forward_y = world.agent_forward()
+
+    if world.data[forward_y][forward_x] == EntityType.WALL:
+        percept.bump = True
+
+    list(prolog.query(f"move(moveforward, {percept})"))
+    return percept
+
 if __name__ == "__main__":
-    for i, arg in enumerate(sys.argv):
-        print(f"Argument {i:>6}: {arg}")
 
     world = Map()
-    relative_world = RelativeMap()
-
     world.data[1][4] = EntityType.PORTAL
     world.data[3][4] = EntityType.PORTAL
     world.data[4][5] = EntityType.PORTAL
     world.data[4][1] = EntityType.WUMPUS
     world.data[4][2] = EntityType.COIN
 
-    prolog = Prolog()
+    world.agent_start = Agent(1, 1, Direction.NORTH)
+    world.reset() # Resets put the agent at start position
+
+    agent = "data/agent.pl"
 
     if len(sys.argv) > 1:
-        prolog.consult(sys.argv[1])
-    else:
-        prolog.consult("data/agent.pl")
+        agent = sys.argv[1]
 
+    driver = WumpusDriver(world, agent)
+
+    print(driver.map)
     print_help()
 
     while True:
 
-        print(relative_world)
+        print(driver.relative)
 
         print("? for help")
         action = input("> ") \
@@ -57,32 +71,27 @@ if __name__ == "__main__":
         # Driver Commands
         if action in ["quit", "q"]:
             break
-
         elif action == "map":
-            print(world)
-            
+            print(driver.map)
         elif action == "?":
             print_help()
 
         # Agent Commands
         elif action in ["turnright", "tr"]:
             print("Turn Right")
-
         elif action in ["turnleft", "tl"]:
             print("Turn Left")
-            
         elif action in ["moveforward", "move"]:
-            print("Move")
-
+            driver.move_forward()
+            # driver.update()
         elif action == "explore":
             print("Explore")
-
         elif action == "shoot":
             print("Shoot")
-
         elif action == "pickup":
             print("Pickup")
 
+        # Misc
         else:
             print("Invalid command")
 

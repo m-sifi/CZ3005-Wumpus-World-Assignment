@@ -9,6 +9,15 @@ class EntityType(Enum):
     COIN            = 3
     WALL            = 4
 
+class State(Enum):
+    UNKNOWN         = 0,
+    SAFE_VISITED    = 1,
+    SAFE_UNVISITED  = 2,
+    WUMPUS          = 3
+    PORTAL          = 4
+    COIN            = 5
+    WALL            = 6
+
 class Direction(Enum):
     NORTH   = 0
     EAST    = 1
@@ -27,7 +36,6 @@ class Percept():
     def __str__(self):
         convert = lambda x: "on" if x else "off"
         return f"[{convert(self.confounded)}, {convert(self.stench)}, {convert(self.tingle)}, {convert(self.glitter)}, {convert(self.bump)}, {convert(self.scream)}]" 
-        
 
 @dataclass
 class Agent():
@@ -53,12 +61,14 @@ class Map():
 
         self.data = None
         self.agent = None
+        self.agent_start = None
 
         self.init()
 
     def init(self):
         self.data = [[ EntityType.NONE for x in range(self.width) ] for y in range(self.height)]
         self.agent = Agent(1, 1, Direction.NORTH)
+        self.agent_start = Agent(1, 1, Direction.NORTH)
 
         for x in range(self.width):
             self.data[0][x] = EntityType.WALL
@@ -68,7 +78,7 @@ class Map():
             self.data[y][0] = EntityType.WALL
             self.data[y][self.width - 1] = EntityType.WALL
 
-    def get_percept(self, x, y):
+    def percept(self, x, y):
         percept = Percept()
         current = self.data[y][x]
         neighbours = self.neighbours(x, y)
@@ -82,6 +92,8 @@ class Map():
         if current == EntityType.COIN:
             percept.glitter = True
 
+        # Scream?
+
         return percept
 
     def is_valid(self, x, y):
@@ -91,13 +103,36 @@ class Map():
         directions = [ (x, y + 1), (x, y - 1), (x + 1, y), (x - 1, y)]
         return [ self.data[y][x] for x, y in directions if self.is_valid(x, y) ]
 
+    def agent_forward(self):
+        if self.agent.direction == Direction.NORTH:
+            return self.agent.x, self.agent.y + 1
+        elif self.agent.direction == Direction.SOUTH:
+            return self.agent.x, self.agent.y - 1
+        elif self.agent.direction == Direction.EAST:
+            return self.agent.x + 1, self.agent.y
+        elif self.agent.direction == Direction.WEST:
+            return self.agent.x - 1, self.agent.y
+
+    def reset(self):
+        self.agent = Agent(self.agent_start.x, self.agent_start.y, self.agent_start.direction)
+
+    def to_absolute(self, x, y):
+        if self.agent_start.direction == Direction.NORTH:
+            return (self.agent_start.x + x, self.agent_start.y + y)
+        elif self.agent_start.direction == Direction.SOUTH:
+            return (self.agent_start.x - x, self.agent_start.y - y)
+        elif self.agent_start.direction == Direction.EAST:
+            return (self.agent_start.x + y, self.agent_start.y - x)
+        elif self.agent_start.direction == Direction.WEST:
+            return (self.agent_start.x - y, self.agent_start.y + x)
+
     def __repr__(self):
         pixels = [[ None for x in range(3 * self.width)] for y in range(3 * self.height)]
 
         for y in range(self.height):
             for x in range(self.width):
                 symbols = [ "·" for x in range(9) ]
-                percept = self.get_percept(x, y)
+                percept = self.percept(x, y)
 
                 if self.data[y][x] == EntityType.WALL:
                     symbols = [ "#" for x in range(9) ]
