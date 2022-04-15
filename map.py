@@ -10,9 +10,9 @@ class EntityType(Enum):
     WALL            = 4
 
 class State(Enum):
-    UNKNOWN         = 0,
-    SAFE_VISITED    = 1,
-    SAFE_UNVISITED  = 2,
+    UNKNOWN         = 0
+    SAFE_VISITED    = 1
+    SAFE_UNVISITED  = 2
     WUMPUS          = 3
     PORTAL          = 4
     COIN            = 5
@@ -36,6 +36,30 @@ class Percept():
     def __str__(self):
         convert = lambda x: "on" if x else "off"
         return f"[{convert(self.confounded)}, {convert(self.stench)}, {convert(self.tingle)}, {convert(self.glitter)}, {convert(self.bump)}, {convert(self.scream)}]" 
+
+    def __repr__(self):
+        status = []
+
+        if self.confounded:
+            status.append("Confounded")
+
+        if self.stench:
+            status.append("Stench")
+
+        if self.tingle:
+            status.append("Tingle")
+
+        if self.glitter:
+            status.append("Glitter")
+
+        if self.bump:
+            status.append("Bump")
+
+        if self.scream:
+            status.append("Scream")
+
+        return f"[{'-'.join(status)}]"
+
 
 @dataclass
 class Cell():
@@ -230,6 +254,8 @@ class RelativeMap():
 
         mid = floor(size / 2)
 
+        current_cell = None
+
         for coordinate, cell in self.path.items():
             x, y = coordinate
             symbols = [ "·" for x in range(9) ]
@@ -271,9 +297,13 @@ class RelativeMap():
                 symbols[4] = "s"
 
             if self.agent.x == x and self.agent.y == y:
+                current_cell = cell
                 symbols[3] = "-"
                 symbols[4] = str(self.agent)
                 symbols[5] = "-"
+
+            if cell.state == State.WALL:
+                symbols = [ "#" for x in range(9) ]
 
             px = (mid + x) * 3
             py = (size - (mid + y) - 1) * 3
@@ -285,6 +315,8 @@ class RelativeMap():
         repr = ""
         for row in pixels:
             repr += " ".join(row) + "\n"
+
+        repr += f"{current_cell.percept.__repr__()}\n"
 
         self.reset_state()
         return repr
