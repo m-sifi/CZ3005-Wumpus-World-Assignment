@@ -17,12 +17,12 @@ def print_help():
     print_command("?", "Prints out help")
 
     print("\n== Agent Commands ==")
-    print_command("turnright / tr")
-    print_command("turnleft / tl")
-    print_command("moveforward / move")
-    print_command("explore")
-    print_command("shoot")
-    print_command("pickup")
+    print_command("turnright / tr / r")
+    print_command("turnleft / tl / l")
+    print_command("moveforward / move/ f")
+    print_command("explore / e")
+    print_command("shoot / s")
+    print_command("pickup / p")
     print()
 
 def move_forward(world: Map):
@@ -61,7 +61,6 @@ if __name__ == "__main__":
     print_help()
 
     while True:
-
         print(driver.relative)
 
         print("? for help")
@@ -77,18 +76,18 @@ if __name__ == "__main__":
             print_help()
 
         # Agent Commands
-        elif action in ["turnright", "tr"]:
-            print("Turn Right")
-        elif action in ["turnleft", "tl"]:
-            print("Turn Left")
-        elif action in ["moveforward", "move"]:
+        elif action in ["turnright", "tr", "r"]:
+            driver.turn_right()
+        elif action in ["turnleft", "tl", "l"]:
+            driver.turn_left()
+            pass
+        elif action in ["moveforward", "move", "f"]:
             driver.move_forward()
-            # driver.update()
-        elif action == "explore":
+        elif action in ["explore", "e"]:
             print("Explore")
-        elif action == "shoot":
+        elif action in ["shoot", "s"]:
             print("Shoot")
-        elif action == "pickup":
+        elif action in ["pickup", "p"]:
             print("Pickup")
 
         # Misc
