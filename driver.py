@@ -51,6 +51,21 @@ class WumpusDriver():
         # Update Relative Map
         self.update(percept)
 
+    def pickup_coin(self):
+        percept = self.map.percept(self.map.agent.x, self.map.agent.y)
+
+        if percept.glitter:
+            for y in range(self.map.height):
+                for x in range(self.map.height):
+                    if self.map.data[y][x] == EntityType.COIN:
+                        if self.map.status[(x, y)] == True:
+                            percept.glitter = False
+                            self.map.status[(x, y)] = False
+
+        list(self.prolog.query(f"move(pickup, {percept})"))
+        # Update Relative Map
+        self.update(percept)
+
     def turn_left(self):
         percept = self.map.percept(self.map.agent.x, self.map.agent.y)
         list(self.prolog.query(f"move(turnleft, {percept})"))

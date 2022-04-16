@@ -45,7 +45,8 @@ if __name__ == "__main__":
     world.data[3][2] = EntityType.PORTAL
     world.data[4][5] = EntityType.PORTAL
     world.data[4][1] = EntityType.WUMPUS
-    world.data[4][2] = EntityType.COIN
+    # world.data[4][2] = EntityType.COIN
+    world.data[2][1] = EntityType.COIN
 
     world.agent_start = Agent(1, 1, Direction.NORTH)
     world.reset() # Resets put the agent at start position
@@ -90,7 +91,7 @@ if __name__ == "__main__":
         elif action in ["shoot", "s"]:
             driver.shoot()
         elif action in ["pickup", "p"]:
-            print("Pickup")
+            driver.pickup_coin()
 
         # Misc
         else:

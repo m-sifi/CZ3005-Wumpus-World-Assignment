@@ -45,6 +45,12 @@ move(shoot, [Confounded, Stench, Tingle, Glitter, Bump, Scream]) :-
     retractall(hasarrow),
     handle_percept([Confounded, Stench, Tingle, Glitter, Bump, Scream]).
 
+move(pickup, [Confounded, Stench, Tingle, Glitter, Bump, Scream]) :-
+    current(X, Y, _),
+    glitter(X, Y),
+    retractall(glitter(X, Y)),
+    handle_percept([Confounded, Stench, Tingle, Glitter, Bump, Scream]).
+
 move(turnleft, _) :-
     current(X, Y, D),
     execute(turnleft, X, Y, D, _, _, D1),

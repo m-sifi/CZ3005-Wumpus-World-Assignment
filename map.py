@@ -122,11 +122,11 @@ class Map():
             directions = [ (x, y + 1), (x, y - 1), (x + 1, y), (x - 1, y)]
             for x, y in directions:
                 if (x, y) in self.status:
-                    if self.status[(x, y)] == True:
-                        percept.stench = True
+                    percept.stench = self.status[(x, y)]
 
         if current == EntityType.COIN:
-            percept.glitter = True
+            if (x, y) in self.status:
+                percept.glitter = self.status[(x, y)]
 
         # Scream?
 
@@ -159,6 +159,9 @@ class Map():
         for y in range(self.height):
             for x in range(self.width):
                 if self.data[y][x] == EntityType.WUMPUS:
+                    self.status[(x, y)] = True
+
+                if self.data[y][x] == EntityType.COIN:
                     self.status[(x, y)] = True
 
     def to_absolute(self, x, y):
