@@ -1,3 +1,4 @@
+from random import randint
 from map import *
 from pyswip.easy import *
 from pyswip import Prolog
@@ -10,10 +11,9 @@ class WumpusDriver():
         self.prolog = Prolog()
         self.prolog.consult(agent)
 
-        self.reset()
+        self.restart()
 
     def move_forward(self):
-
         forward_x, forward_y = self.map.agent_forward()
         percept = self.map.percept(forward_x, forward_y)
 
@@ -21,8 +21,33 @@ class WumpusDriver():
             percept = self.map.percept(self.map.agent.x, self.map.agent.y)
             percept.bump = True
 
+        if self.map.data[forward_y][forward_x] == EntityType.PORTAL:
+            self.reset()
+            percept = self.map.percept(self.map.agent.x, self.map.agent.y)
+            percept.confounded = True
+
         list(self.prolog.query(f"move(moveforward, {percept})"))
 
+        # Update Relative Map
+        self.update(percept)
+
+    def shoot(self):
+        percept = self.map.percept(self.map.agent.x, self.map.agent.y)
+
+        if self.map.agent.arrow:
+            x = self.map.agent.x
+            y = self.map.agent.y
+            direction = self.map.agent.direction
+
+            while self.map.is_valid(x, y):
+                if self.map.data[y][x] == EntityType.WUMPUS:
+                    if self.map.status[(x, y)] == True:
+                        self.map.status[(x, y)] = False
+                        percept.scream = True
+
+                x, y = self.map.get_forward(x, y, direction)
+
+        list(self.prolog.query(f"move(shoot, {percept})"))
         # Update Relative Map
         self.update(percept)
 
@@ -41,18 +66,24 @@ class WumpusDriver():
         self.update(percept)
 
     def update(self, percept):
-        self.pl_current()
-        self.pl_safe()
-        self.pl_visited()
+        # self.plf_visited()
         self.pl_wumpus()
         self.pl_portal()
         self.pl_wall()
+        self.pl_current()
+        self.pl_safe()
+
+        # self.pl_listing("visited(X, Y)")
+        # self.pl_listing("confundus(X, Y)")
+        # self.pl_listing("wumpus(X, Y)")
 
         cell = Cell(percept)
         self.relative.path[(self.relative.agent.x, self.relative.agent.y)] = cell
 
+        self.map.agent.arrow = bool(list(self.prolog.query("hasarrow")))
 
-    def reset(self):
+
+    def restart(self):
         self.relative = RelativeMap()
         reborn = Functor("reborn", 0)
 
@@ -60,6 +91,22 @@ class WumpusDriver():
         self.map.reset()
 
         self.update(Percept(confounded=True))
+
+    def reset(self):
+        self.relative = RelativeMap()
+        x = 0
+        y = 0
+        direction = Direction(randint(0, 3))
+
+        while(self.map.data[y][x] != EntityType.NONE):
+            x = randint(1, self.map.width - 2)
+            y = randint(1, self.map.height - 2)
+
+        self.map.agent_start.x = x
+        self.map.agent_start.y = y
+        self.map.agent_start.direction = direction
+
+        self.map.reset()
 
     def pl_current(self):
         current = Functor("current", 3)
@@ -109,37 +156,21 @@ class WumpusDriver():
         q.closeQuery()
 
     def pl_safe(self):
-        safe = Functor("safe", 2)
-        X = Variable()
-        Y = Variable()
+        adjacent = self.relative.adjacent()
 
-        q = Query(safe(X, Y))
+        for x, y in adjacent:
+            if self.safe(x, y):
+                cell = Cell(state=State.SAFE_UNVISITED)
+                self.relative.path[(x, y)] = cell
 
-        while q.nextSolution():
-            x, y = X.value, Y.value
-            print(f"Safe: {(x, y)}")
-            
-            cell = Cell(state=State.SAFE_UNVISITED)
-            self.relative.path[(x, y)] = cell
-            
-        q.closeQuery()
+        for coordinate, cell in self.relative.path.items():
+            x, y = coordinate
 
-    def pl_visited(self):
-        visited = Functor("visited", 2)
-        X = Variable()
-        Y = Variable()
+            if self.visited(x, y):
+                cell.state = State.SAFE_VISITED
 
-        q = Query(visited(X, Y))
-
-        while q.nextSolution():
-            x, y = X.value, Y.value
-            print(f"Visited: {(x, y)}")
-            
-            cell = Cell(state=State.SAFE_VISITED)
-            self.relative.path[(x, y)] = cell
-            
-        q.closeQuery()
-
+    # def pl_unsafe(self):
+ 
     def pl_wumpus(self):
         wumpus = Functor("wumpus", 2)
         X = Variable()
@@ -149,7 +180,6 @@ class WumpusDriver():
 
         while q.nextSolution():
             x, y = X.value, Y.value
-            print(f"wumpus: {(x, y)}")
             
             cell = Cell(state=State.WUMPUS)
             self.relative.path[(x, y)] = cell
@@ -165,7 +195,6 @@ class WumpusDriver():
 
         while q.nextSolution():
             x, y = X.value, Y.value
-            print(f"wall: {(x, y)}")
 
             cell = Cell(state=State.WALL)
             self.relative.path[(x, y)] = cell
@@ -181,9 +210,17 @@ class WumpusDriver():
 
         while q.nextSolution():
             x, y = X.value, Y.value
-            print(f"portal: {(x, y)}")
 
             cell = Cell(state=State.PORTAL)
             self.relative.path[(X.value, Y.value)] = cell
             
         q.closeQuery()
+
+    def safe(self, x, y):
+        return bool(list(self.prolog.query(f"safe({x}, {y})")))
+
+    def visited(self, x, y):
+        return bool(list(self.prolog.query(f"visited({x}, {y})")))
+
+    def pl_listing(self, query):
+        print(f"{query}: {list(self.prolog.query(query))}")

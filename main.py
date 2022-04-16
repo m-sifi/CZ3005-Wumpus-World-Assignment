@@ -42,7 +42,7 @@ if __name__ == "__main__":
 
     world = Map()
     world.data[1][4] = EntityType.PORTAL
-    world.data[3][4] = EntityType.PORTAL
+    world.data[3][2] = EntityType.PORTAL
     world.data[4][5] = EntityType.PORTAL
     world.data[4][1] = EntityType.WUMPUS
     world.data[4][2] = EntityType.COIN
@@ -67,6 +67,8 @@ if __name__ == "__main__":
         action = input("> ") \
                     .strip()
 
+        print() # nl
+
         # Driver Commands
         if action in ["quit", "q"]:
             break
@@ -86,7 +88,7 @@ if __name__ == "__main__":
         elif action in ["explore", "e"]:
             print("Explore")
         elif action in ["shoot", "s"]:
-            print("Shoot")
+            driver.shoot()
         elif action in ["pickup", "p"]:
             print("Pickup")
 

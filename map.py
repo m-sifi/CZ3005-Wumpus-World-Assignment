@@ -89,6 +89,8 @@ class Map():
         self.height = 6
 
         self.data = None
+        self.status = None
+
         self.agent = None
         self.agent_start = None
 
@@ -96,6 +98,7 @@ class Map():
 
     def init(self):
         self.data = [[ EntityType.NONE for x in range(self.width) ] for y in range(self.height)]
+        self.status = {}
         self.agent = Agent(1, 1, Direction.NORTH)
         self.agent_start = Agent(1, 1, Direction.NORTH)
 
@@ -116,7 +119,11 @@ class Map():
             percept.tingle = True
 
         if EntityType.WUMPUS in neighbours:
-            percept.stench = True
+            directions = [ (x, y + 1), (x, y - 1), (x + 1, y), (x - 1, y)]
+            for x, y in directions:
+                if (x, y) in self.status:
+                    if self.status[(x, y)] == True:
+                        percept.stench = True
 
         if current == EntityType.COIN:
             percept.glitter = True
@@ -133,17 +140,26 @@ class Map():
         return [ self.data[y][x] for x, y in directions if self.is_valid(x, y) ]
 
     def agent_forward(self):
-        if self.agent.direction == Direction.NORTH:
-            return self.agent.x, self.agent.y + 1
-        elif self.agent.direction == Direction.SOUTH:
-            return self.agent.x, self.agent.y - 1
-        elif self.agent.direction == Direction.EAST:
-            return self.agent.x + 1, self.agent.y
-        elif self.agent.direction == Direction.WEST:
-            return self.agent.x - 1, self.agent.y
+        return self.get_forward(self.agent.x, self.agent.y, self.agent.direction)
+
+    def get_forward(self, x, y, direction):
+        if direction == Direction.NORTH:
+            return x, y + 1
+        elif direction == Direction.SOUTH:
+            return x, y - 1
+        elif direction == Direction.EAST:
+            return x + 1, y
+        elif direction == Direction.WEST:
+            return x - 1, y
 
     def reset(self):
         self.agent = Agent(self.agent_start.x, self.agent_start.y, self.agent_start.direction)
+        self.status = {}
+
+        for y in range(self.height):
+            for x in range(self.width):
+                if self.data[y][x] == EntityType.WUMPUS:
+                    self.status[(x, y)] = True
 
     def to_absolute(self, x, y):
         if self.agent_start.direction == Direction.NORTH:
@@ -190,10 +206,12 @@ class Map():
                     symbols[4] = "?"
                     symbols[5] = " "
 
-                    if self.data[y][x] == EntityType.WUMPUS:
+                    if self.data[y][x] == EntityType.WUMPUS and self.status[(x, y)] == True:
                         symbols[3] = "-"
                         symbols[4] = "W"
                         symbols[5] = "-"
+                    elif self.data[y][x] == EntityType.PORTAL:
+                        symbols[4] = "O"
                     elif self.agent.x == x and self.agent.y == y:
                         symbols[3] = "-"
                         symbols[4] = str(self.agent)
@@ -206,7 +224,7 @@ class Map():
                     for w in range(3):
                         pixels[__y + z][__x + w] = symbols[z * 3 + w]
 
-        repr = ""
+        repr = "== Absolute Map ==\n"
         for row in pixels:
             repr += " ".join(row) + "\n"
 
@@ -218,6 +236,12 @@ class RelativeMap():
         self.agent  : Agent = None
 
         self.reset()
+
+    def adjacent(self):
+        x = self.agent.x
+        y = self.agent.y
+
+        return [ (x + 1, y), (x - 1, y), (x, y + 1), (x, y - 1)]
     
     def reset_state(self):
         for coordinate, cell in self.path.items():
@@ -312,7 +336,7 @@ class RelativeMap():
                 for __x in range(3):
                     pixels[py + __y][px + __x] = symbols[__y * 3 + __x]    
 
-        repr = ""
+        repr = "== Relative Map ==\n"
         for row in pixels:
             repr += " ".join(row) + "\n"
 

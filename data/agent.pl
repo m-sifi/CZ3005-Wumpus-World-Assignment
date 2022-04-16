@@ -1,7 +1,6 @@
 
 :- dynamic([
-    agent_arrow/0,
-    agent_actions/1,
+    hasarrow/0,
 
     wumpus/2,
     confundus/2,
@@ -11,10 +10,8 @@
 
     current/3,
     visited/2,
-    safe/2
+    wall/2
 ]).
-
-agent_actions([]).
 
 % Lab Predicates required to implement
 %   reborn
@@ -33,7 +30,7 @@ agent_actions([]).
 %
 %   explore(L)
 %   current(X, Y, D)
-%   has_arrow.
+%   hasarrow.
 
 reborn :- 
     reposition([on, off, off, off, off, off]),
@@ -44,12 +41,15 @@ move(moveforward, [Confounded, Stench, Tingle, Glitter, Bump, Scream]) :-
     update_agent(Bump),
     handle_percept([Confounded, Stench, Tingle, Glitter, Bump, Scream]).
 
+move(shoot, [Confounded, Stench, Tingle, Glitter, Bump, Scream]) :-
+    retractall(hasarrow),
+    handle_percept([Confounded, Stench, Tingle, Glitter, Bump, Scream]).
+
 move(turnleft, _) :-
     current(X, Y, D),
     execute(turnleft, X, Y, D, _, _, D1),
     retractall(current(_, _, _)),
     assertz(current(X, Y, D1)).
-
 
 move(turnright, _) :-
     current(X, Y, D),
@@ -58,27 +58,12 @@ move(turnright, _) :-
     assertz(current(X, Y, D1)).
 
 reposition(L) :- 
-    retractall(current(_, _, _)),
+    handle_percept(L).
 
-    retractall(visited(_, _)),
-    retractall(wumpus(_, _)),
-    retractall(confundus(_, _)),
-    retractall(tingle(_, _)),
-    retractall(glitter(_, _)),
-    retractall(stench(_, _)),
-    retractall(safe(_, _)),
-    retractall(wall(_, _)),
-
-    assertz(current(0, 0, rnorth)),
-    handle_percept(L),
-
-    assertz(visited(0, 0)),
-    assertz(safe(0, 0)).
-
-safe_visited(X, Y) :-
-    visited(X, Y),
+safe(X, Y) :-
     \+ wumpus(X, Y),
-    \+ confundus(X, Y).
+    \+ confundus(X, Y),
+    \+ wall(X, Y).
 
 % explore(L) where L = Actions that lead agent to safe unvisited area. 
 %
@@ -131,16 +116,14 @@ possible(_, moveforward).
 update_agent(on) :-
     current(X, Y, D),
     execute(moveforward, X, Y, D, X1, Y1, _),
-    format("~w ~w ~w ~n", [X1, Y1, D]),
-    assertz(wall(X1, Y1)),
-    retractall(safe(X1, Y1)).
+    assertz(wall(X1, Y1)).
 
 update_agent(off) :-
     current(X, Y, D),
     execute(moveforward, X, Y, D, X1, Y1, _),
     retractall(current(_, _, _)),
     assertz(current(X1, Y1, D)),
-    assertz(visited(X1, Y1, D)).
+    assertz(visited(X1, Y1)).
 
 execute(moveforward, X, Y, rnorth, X1, Y1, _) :-
     X1 is X, 
@@ -182,50 +165,53 @@ handle_percept([Confounded, Stench, Tingle, Glitter, Bump, Scream]) :-
 
 % Confounded Status
 confound(on) :-
+    retractall(current(_, _, _)),
+    retractall(visited(_, _)),
     retractall(wumpus(_, _)),
     retractall(confundus(_, _)),
     retractall(tingle(_, _)),
     retractall(glitter(_, _)),
-    retractall(stentch(_, _)),
+    retractall(stench(_, _)),
+    retractall(wall(_, _)),
 
-    retractall(current(_, _, _)),
-    assertz(current(0, 0, rnorth)).
+    assertz(current(0, 0, rnorth)),
+    assertz(visited(0, 0)).
 
 confound(off).
 
 % Stench Status
 stench(on) :-
     current(X, Y, _),
+    assertz(stench(X, Y)),
     XR is X + 1, assume_wumpus(on, XR, Y),
     XL is X - 1, assume_wumpus(on, XL, Y),
     YU is Y + 1, assume_wumpus(on, X, YU),
-    YD is Y - 1, assume_wumpus(on, X, YD),
-    true.
+    YD is Y - 1, assume_wumpus(on, X, YD).
 
 stench(off) :-
     current(X, Y, _),
+    retractall(stench(X, Y)),
     XR is X + 1, assume_wumpus(off, XR, Y),
     XL is X - 1, assume_wumpus(off, XL, Y),
     YU is Y + 1, assume_wumpus(off, X, YU),
-    YD is Y - 1, assume_wumpus(off, X, YD),
-    true.
+    YD is Y - 1, assume_wumpus(off, X, YD).
 
 % Tingle Status
 tingle(on) :-
     current(X, Y, _),
+    assertz(tingle(X, Y)),
     XR is X + 1, assume_portal(on, XR, Y),
     XL is X - 1, assume_portal(on, XL, Y),
     YU is Y + 1, assume_portal(on, X, YU),
-    YD is Y - 1, assume_portal(on, X, YD),
-    true.
+    YD is Y - 1, assume_portal(on, X, YD).
 
 tingle(off) :-
     current(X, Y, _),
+    retractall(tingle(X, Y)),
     XR is X + 1, assume_portal(off, XR, Y),
     XL is X - 1, assume_portal(off, XL, Y),
     YU is Y + 1, assume_portal(off, X, YU),
-    YD is Y - 1, assume_portal(off, X, YD),
-    true.
+    YD is Y - 1, assume_portal(off, X, YD).
 
 % Glitter Status
 glitter(on) :-
@@ -247,17 +233,22 @@ glitter(off) :-
 %     current(X, Y, D),
 %     forward(X, Y, D, WX, WY),
 %     retractall(wall(WX, WY)).
-bump(on).
+
+bump(on) :-
+    current(X, Y, D),
+    execute(moveforward, X, Y, D, X1, Y1, _),
+    assertz(wall(X1, Y1)).
+
 bump(off).
 
 % Scream Status
-scream(on).
+scream(on) :- retractall(wumpus(_, _)).
 scream(off).
 
-assume_wumpus(on, X, Y) :- \+ visited(X, Y), \+safe(X, Y), assertz(wumpus(X, Y)).
+assume_wumpus(on, X, Y) :- assertz(wumpus(X, Y)).
 assume_wumpus(off, X, Y) :- retractall(wumpus(X, Y)).
 
-assume_portal(on, X, Y) :- \+visited(X, Y), \+safe(X, Y), assertz(confundus(X, Y)).
+assume_portal(on, X, Y) :- assertz(confundus(X, Y)).
 assume_portal(off, X, Y) :- retractall(confundus(X, Y)).
 
 assume_glitter(on, X, Y) :- assertz(glitter(X, Y)).
