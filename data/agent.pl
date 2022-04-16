@@ -75,49 +75,43 @@ safe(X, Y) :-
 %
 
 % explore(L) :- distinct(explore(L)).
-
 explore(L) :-
-    % Placeholder Implementation
     current(X, Y, D),
-    explore(X, Y, D, L, []).
+    explore(L, Action, X, Y, D).
 
-explore(X, Y, D, [PossibleAction|L], Visited) :-
-    hash(X, Y, H),
-    \+ member(H, Visited),
-    possible(L, PossibleAction),
-    execute(PossibleAction, X, Y, D, X0, Y0, D0),
-    ( 
-        safe(X0, Y0), visited(X0, Y0),
-        explore(X0, Y0, D0, L, [H|Visited])
-    ;
-        safe(X0, Y0), not(visited(X0, Y0))
-    ).
+explore([], _, X, Y, _) :-
+    safe(X, Y),
+    \+ visited(X, Y).
 
-% explore(L) :-
-%     % Placeholder Implementation
-%     \+ any_unexplored,
-%     \+ glitter(_, _),
-%     current(0, 0, _),
-%     append([], [], L).
-
-% For naming consistency sake, hasarrow is an alias for agent_arrow.
-hasarrow :- agent_arrow.
-
-%
-% Exploring
-%
-
-possible([], moveforward).
-possible([moveforward| L], turnleft).
-possible([moveforward| L], turnright).
-possible([moveforward| L], moveforward).
-possible([turnleft| L], moveforward).
-possible([turnright| L], moveforward).
-possible(_, moveforward).
+explore([Action|L], LastAction, X, Y, D) :-
+    visited(X, Y),
+    possible(LastAction, Action),
+    execute(Action, X, Y, D, X1, Y1, D1),
+    explore(L, Action, X1, Y1, D1).
 
 % 
 % Mapping 
 %
+
+possible(turnleft, moveforward).
+% possible(turnleft, turnleft).
+
+possible(turnright, moveforward).
+% possible(turnright, turnright).
+
+possible(moveforward, moveforward).
+possible(moveforward, turnleft).
+possible(moveforward, turnright).
+
+% possible([], moveforward).
+% possible([], turnleft).
+% possible([], turnright).
+% possible([moveforward| L], turnleft).
+% possible([moveforward| L], turnright).
+% possible([moveforward| L], moveforward).
+% possible([turnleft| L], moveforward).
+% possible([turnright| L], moveforward).
+% possible(_, moveforward).
 
 update_agent(on) :-
     current(X, Y, D),

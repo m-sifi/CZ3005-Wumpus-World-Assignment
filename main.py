@@ -87,7 +87,7 @@ if __name__ == "__main__":
         elif action in ["moveforward", "move", "f"]:
             driver.move_forward()
         elif action in ["explore", "e"]:
-            print("Explore")
+            driver.explore()
         elif action in ["shoot", "s"]:
             driver.shoot()
         elif action in ["pickup", "p"]:

@@ -66,6 +66,18 @@ class WumpusDriver():
         # Update Relative Map
         self.update(percept)
 
+    def explore(self):
+        permutations = list(map(lambda x: x["L"], list(self.prolog.query(f"explore(L)"))))
+        selected = permutations.pop(0)
+
+        for action in selected:
+            if action == "moveforward":
+                self.move_forward()
+            elif action == "turnleft":
+                self.turn_left()
+            elif action == "turnright":
+                self.turn_right()
+
     def turn_left(self):
         percept = self.map.percept(self.map.agent.x, self.map.agent.y)
         list(self.prolog.query(f"move(turnleft, {percept})"))
