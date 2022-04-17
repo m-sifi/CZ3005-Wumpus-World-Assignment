@@ -67,16 +67,24 @@ class WumpusDriver():
         self.update(percept)
 
     def explore(self):
-        permutations = list(map(lambda x: x["L"], list(self.prolog.query(f"explore(L)"))))
-        selected = permutations.pop(0)
+        try:
+            path = list(self.prolog.query(f"once(explore(L))"))[-1]["L"]
+            print(path)
 
-        for action in selected:
-            if action == "moveforward":
-                self.move_forward()
-            elif action == "turnleft":
-                self.turn_left()
-            elif action == "turnright":
-                self.turn_right()
+            for action in path:
+                if action == "moveforward":
+                    self.move_forward()
+                elif action == "turnleft":
+                    self.turn_left()
+                elif action == "turnright":
+                    self.turn_right()
+                # elif action == "pickup":
+                #     print("Pick")
+                #     self.pickup_coin()
+
+                self.pickup_coin()
+        except:
+            print(list(self.prolog.query(f"glitter(X, Y)")))
 
     def turn_left(self):
         percept = self.map.percept(self.map.agent.x, self.map.agent.y)

@@ -41,7 +41,7 @@ def move_forward(world: Map):
 if __name__ == "__main__":
 
     world = Map()
-    world.data[1][4] = EntityType.PORTAL
+    world.data[1][5] = EntityType.PORTAL
     world.data[3][2] = EntityType.PORTAL
     world.data[4][5] = EntityType.PORTAL
     world.data[4][1] = EntityType.WUMPUS

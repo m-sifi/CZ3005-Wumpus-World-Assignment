@@ -71,47 +71,41 @@ safe(X, Y) :-
     \+ confundus(X, Y),
     \+ wall(X, Y).
 
-% explore(L) where L = Actions that lead agent to safe unvisited area. 
-%
-
-% explore(L) :- distinct(explore(L)).
 explore(L) :-
     current(X, Y, D),
-    explore(L, Action, X, Y, D).
+    explore_r(20, X, Y, D, [], L).
 
-explore([], _, X, Y, _) :-
-    safe(X, Y),
-    \+ visited(X, Y).
+explore_r(Count, X, Y, D, Visited, []) :-
+    \+ visited(X, Y), safe(X, Y), !.
 
-explore([Action|L], LastAction, X, Y, D) :-
+
+explore_r(Count, X, Y, D, Visited, Path) :-
+    \+ memberchk((X, Y, D), Visited),
     visited(X, Y),
-    possible(LastAction, Action),
-    execute(Action, X, Y, D, X1, Y1, D1),
-    explore(L, Action, X1, Y1, D1).
+    Count1 is Count - 1, Count1 >= 0, !,
+    explore_move(Count1, X, Y, D, [(X, Y, D)|Visited], Path).
+
+explore_move(Count, X, Y, D, Visited, [turnleft|Path]) :-
+    execute(turnleft, X, Y, D, X1, Y1, D1),
+    explore_r(Count, X1, Y1, D1, Visited, Path).
+
+explore_move(Count, X, Y, D, Visited, [turnright|Path]) :-
+    execute(turnright, X, Y, D, X1, Y1, D1),
+    explore_r(Count, X1, Y1, D1, Visited, Path).
+
+explore_move(Count, X, Y, D, Visited, [moveforward|Path]) :-
+    execute(moveforward, X, Y, D, X1, Y1, D1),
+    explore_r(Count, X1, Y1, D1, Visited, Path).
 
 % 
 % Mapping 
 %
 
-possible(turnleft, moveforward).
-% possible(turnleft, turnleft).
+possible(moveforward, X, Y, D) :-
+    execute(moveforward, X, Y, D, X1, Y1, D1),
+    safe(X1, Y1), visited(X1, Y1).
 
-possible(turnright, moveforward).
-% possible(turnright, turnright).
-
-possible(moveforward, moveforward).
-possible(moveforward, turnleft).
-possible(moveforward, turnright).
-
-% possible([], moveforward).
-% possible([], turnleft).
-% possible([], turnright).
-% possible([moveforward| L], turnleft).
-% possible([moveforward| L], turnright).
-% possible([moveforward| L], moveforward).
-% possible([turnleft| L], moveforward).
-% possible([turnright| L], moveforward).
-% possible(_, moveforward).
+possible(turnleft, _, _, _).
 
 update_agent(on) :-
     current(X, Y, D),
@@ -125,31 +119,31 @@ update_agent(off) :-
     assertz(current(X1, Y1, D)),
     assertz(visited(X1, Y1)).
 
-execute(moveforward, X, Y, rnorth, X1, Y1, _) :-
+execute(moveforward, X, Y, rnorth, X1, Y1, rnorth) :-
     X1 is X, 
     Y1 is Y + 1.
 
-execute(moveforward, X, Y, rsouth, X1, Y1, _) :-
+execute(moveforward, X, Y, rsouth, X1, Y1, rsouth) :-
     X1 is X, 
     Y1 is Y - 1.
 
-execute(moveforward, X, Y, reast, X1, Y1, _) :-
+execute(moveforward, X, Y, reast, X1, Y1, reast) :-
     X1 is X + 1, 
     Y1 is Y.
 
-execute(moveforward, X, Y, rwest, X1, Y1, _) :-
+execute(moveforward, X, Y, rwest, X1, Y1, rwest) :-
     X1 is X - 1, 
     Y1 is Y.
 
-execute(turnright, _, _, rnorth, _, _, D) :- D = reast.
-execute(turnright, _, _, reast, _, _, D) :- D = rsouth.
-execute(turnright, _, _, rsouth, _, _, D) :- D = rwest.
-execute(turnright, _, _, rwest, _, _, D) :- D = rnorth.
+execute(turnright, X, Y, rnorth, X, Y, D) :- D = reast.
+execute(turnright, X, Y, reast, X, Y, D) :- D = rsouth.
+execute(turnright, X, Y, rsouth, X, Y, D) :- D = rwest.
+execute(turnright, X, Y, rwest, X, Y, D) :- D = rnorth.
 
-execute(turnleft, _, _, rnorth, _, _, D) :- D = rwest.
-execute(turnleft, _, _, rwest, _, _, D) :- D = rsouth.
-execute(turnleft, _, _, rsouth, _, _, D) :- D = reast.
-execute(turnleft, _, _, reast, _, _, D) :- D = rnorth.
+execute(turnleft, X, Y, rnorth, X, Y, D) :- D = rwest.
+execute(turnleft, X, Y, rwest, X, Y, D) :- D = rsouth.
+execute(turnleft, X, Y, rsouth, X, Y, D) :- D = reast.
+execute(turnleft, X, Y, reast, X, Y, D) :- D = rnorth.
 
 % 
 % Perceptors Handler
@@ -221,18 +215,6 @@ glitter(on) :-
 glitter(off) :-
     current(X, Y, _),
     retractall(glitter(X, Y)).
-
-% Bump Status
-% bump(on) :-
-%     % [TODO] Fail predicate so move(moveforward) don't run.
-%     current(X, Y, D),
-%     forward(X, Y, D, WX, WY),
-%     assertz(wall(WX, WY)).
-
-% bump(off) :-
-%     current(X, Y, D),
-%     forward(X, Y, D, WX, WY),
-%     retractall(wall(WX, WY)).
 
 bump(on) :-
     current(X, Y, D),
