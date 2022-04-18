@@ -8,8 +8,9 @@
             "name": "Python: Run Driver",
             "type": "python",
             "request": "launch",
-            "program": "main.py",
+            "program": "TeamJiji-Driver.py",
             "console": "integratedTerminal",
+            "args": ["data/TeamJiji-Agent.pl"],
             "justMyCode": true
         }
     ]

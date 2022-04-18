@@ -31,7 +31,6 @@ class WumpusDriver():
             percept.confounded = True
 
             self.restart()
-            # self.update(percept)
             return
 
         list(self.prolog.query(f"move(moveforward, {percept})"))
@@ -64,7 +63,6 @@ class WumpusDriver():
             self.map.coin[(self.map.agent.x, self.map.agent.y)] = False
 
         list(self.prolog.query(f"move(pickup, {percept})"))
-        # Update Relative Map
         self.update(percept)
 
     def explore(self):
@@ -80,30 +78,26 @@ class WumpusDriver():
                 elif action == "turnright":
                     self.turn_right()
         except:
-            # print(list(self.prolog.query(f"glitter(X, Y)")))
-            pass
+            print("explore(L) returned nothing")
 
     def turn_left(self):
         percept = self.map.percept(self.map.agent.x, self.map.agent.y)
-        list(self.prolog.query(f"move(turnleft, {percept})"))
 
-        # Update Relative Map
+        list(self.prolog.query(f"move(turnleft, {percept})"))
         self.update(percept)
 
     def turn_right(self):
         percept = self.map.percept(self.map.agent.x, self.map.agent.y)
-        list(self.prolog.query(f"move(turnright, {percept})"))
 
-        # Update Relative Map
+        list(self.prolog.query(f"move(turnright, {percept})"))
         self.update(percept)
 
     def update(self, percept):
         self.pl_safe()
         self.pl_unsafe()
         self.pl_percept()
-        # self.pl_wumpus()
-        # self.pl_portal()
         self.pl_wall()
+        
         self.pl_current()
 
         self.relative.agent.percept = percept
@@ -151,19 +145,14 @@ class WumpusDriver():
                         .strip()
 
         if direction== "rnorth":
-            # print("rnorth")
             self.relative.agent.direction = Direction.NORTH
         elif direction == "reast":
-            # print("reast")
             self.relative.agent.direction = Direction.EAST
         elif direction == "rsouth":
-            # print("rsouth")
             self.relative.agent.direction = Direction.SOUTH
         elif direction == "rwest":
-            # print("rwest")
             self.relative.agent.direction = Direction.WEST
 
-        # Convert Relative -> Absolute
         x, y = self.map.to_absolute(self.relative.agent.x, self.relative.agent.y)
         self.map.agent.x = x
         self.map.agent.y = y
@@ -176,9 +165,6 @@ class WumpusDriver():
             self.map.agent.direction = Direction((self.relative.agent.direction.value + 2) % 4)
         elif self.map.agent_start.direction == Direction.WEST:
             self.map.agent.direction = Direction((self.relative.agent.direction.value + 3) % 4)
-
-        # print(self.map.agent.x, self.map.agent.y, self.map.agent.direction)
-        # print(self.relative.agent.x, self.relative.agent.y, self.relative.agent.direction)
 
         q.closeQuery()
 
@@ -214,17 +200,12 @@ class WumpusDriver():
                 self.relative.path[(x, y)] = State.PORTAL
 
     def pl_wall(self):
-        wall = Functor("wall", 2)
-        X = Variable()
-        Y = Variable()
+        query = list(self.prolog.query("wall(X, Y)"))
 
-        q = Query(wall(X, Y))
-
-        while q.nextSolution():
-            x, y = X.value, Y.value
+        for result in query:
+            x = result["X"]
+            y = result["Y"]
             self.relative.path[(x, y)] = State.WALL
-            
-        q.closeQuery()
 
     def pl_percept(self):
         stench = list(self.prolog.query("stench(X, Y)"))
