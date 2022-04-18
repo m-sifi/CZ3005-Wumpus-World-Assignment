@@ -79,11 +79,6 @@ class WumpusDriver():
                     self.turn_left()
                 elif action == "turnright":
                     self.turn_right()
-                # elif action == "pickup":
-                #     print("Pick")
-                #     self.pickup_coin()
-
-                self.pickup_coin()
         except:
             # print(list(self.prolog.query(f"glitter(X, Y)")))
             pass
@@ -111,9 +106,7 @@ class WumpusDriver():
         self.pl_wall()
         self.pl_current()
 
-        cell = Cell(percept)
-        self.relative.path[(self.relative.agent.x, self.relative.agent.y)] = cell
-
+        self.relative.agent.percept = percept
         self.map.agent.arrow = bool(list(self.prolog.query("hasarrow")))
 
 

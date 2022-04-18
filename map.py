@@ -74,6 +74,8 @@ class Agent():
     direction : Direction = Direction.NORTH
     arrow : bool = True
 
+    percept : Percept = Percept(confounded=True)
+
     def __str__(self):
         if self.direction == Direction.NORTH:
             return "∧"
@@ -230,7 +232,7 @@ class Map():
                     symbols[4] = "?"
                     symbols[5] = " "
 
-                    if self.data[y][x] == EntityType.WUMPUS and self.wumpus[(x, y)]:
+                    if self.has_wumpus(x, y):
                         symbols[3] = "-"
                         symbols[4] = "W"
                         symbols[5] = "-"
@@ -337,14 +339,6 @@ class RelativeMap():
             if percept.glitter:
                 symbols[6] = "*"
 
-            # Absolute Map will never show bump but we keep this here so I can reference later :)
-            # if percept.bump:
-            #     symbols[7] = "B"
-
-            # Absolute Map will never show scream but we keep this here so I can reference later :)
-            # if percept.scream:
-            #     symbols[8] = "@"
-
 
             symbols[3] = " "
             symbols[4] = "?"
@@ -370,6 +364,12 @@ class RelativeMap():
                 symbols[4] = str(self.agent)
                 symbols[5] = "-"
 
+                if self.agent.percept.bump:
+                    symbols[7] = "B"
+
+                if self.agent.percept.scream:
+                    symbols[8] = "@"
+
             if cell.state == State.WALL:
                 symbols = [ "#" for x in range(9) ]
 
@@ -384,7 +384,7 @@ class RelativeMap():
         for row in pixels:
             repr += " ".join(row) + "\n"
 
-        repr += f"{self.get_percept(self.agent.x, self.agent.y).__repr__()}\n"
+        repr += f"{self.agent.percept.__repr__()}\n"
 
         self.reset_state()
         return repr
