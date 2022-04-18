@@ -189,12 +189,10 @@ class WumpusDriver():
         for result in query:
             x = result["X"]
             y = result["Y"]
-            cell = Cell(state=State.SAFE_UNVISITED)
+            self.relative.path[(x, y)] = State.SAFE_UNVISITED
 
             if result in subquery:
-                cell = Cell(state=State.SAFE_VISITED)
-
-            self.relative.path[(x, y)] = cell
+                self.relative.path[(x, y)] = State.SAFE_VISITED
 
     def pl_unsafe(self):
         query = list(self.prolog.query("wumpus(X, Y)"))
@@ -203,37 +201,17 @@ class WumpusDriver():
         for result in query:
             x = result["X"]
             y = result["Y"]
-            cell = Cell(state=State.WUMPUS)
+            self.relative.path[(x, y)] = State.WUMPUS
 
             if result in subquery:
-                cell = Cell(state=State.UNSAFE)
-
-            self.relative.path[(x, y)] = cell
+                self.relative.path[(x, y)] = State.UNSAFE
 
         for result in subquery:
             x = result["X"]
             y = result["Y"]
 
             if (x, y) not in self.relative.path:
-                self.relative.path[(x, y)] = Cell(state=State.PORTAL)
-
-
-    # def pl_unsafe(self):
- 
-    def pl_wumpus(self):
-        wumpus = Functor("wumpus", 2)
-        X = Variable()
-        Y = Variable()
-
-        q = Query(wumpus(X, Y))
-
-        while q.nextSolution():
-            x, y = X.value, Y.value
-            
-            cell = Cell(state=State.WUMPUS)
-            self.relative.path[(x, y)] = cell
-            
-        q.closeQuery()
+                self.relative.path[(x, y)] = State.PORTAL
 
     def pl_wall(self):
         wall = Functor("wall", 2)
@@ -244,9 +222,7 @@ class WumpusDriver():
 
         while q.nextSolution():
             x, y = X.value, Y.value
-
-            cell = Cell(state=State.WALL)
-            self.relative.path[(x, y)] = cell
+            self.relative.path[(x, y)] = State.WALL
             
         q.closeQuery()
 

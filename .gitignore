@@ -163,3 +163,5 @@ cython_debug/
 pyvenv.cfg
 .venv
 pip-selfcheck.json
+
+.DS_Store

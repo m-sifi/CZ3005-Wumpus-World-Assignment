@@ -61,12 +61,6 @@ class Percept():
 
         return f"[{'-'.join(status)}]"
 
-
-@dataclass
-class Cell():
-    percept : Percept = Percept()
-    state: State = State.UNKNOWN
-
 @dataclass
 class Agent():
     x : int = 1
@@ -274,19 +268,16 @@ class RelativeMap():
         return [ (x + 1, y), (x - 1, y), (x, y + 1), (x, y - 1)]
     
     def reset_state(self):
-        for coordinate, cell in self.path.items():
-            # clear if has state BUMP or SCREAM or CONFOUNDED
-            cell.percept.confounded = False
-            cell.percept.bump = False
-            cell.percept.scream = False
+        self.agent.percept.confounded = False
+        self.agent.percept.bump = False
+        self.agent.percept.scream = False
 
     def reset(self):
         percept = Percept()
         percept.confounded = True
 
-        initial_cell = Cell(percept, State.SAFE_VISITED)
 
-        self.path = {(0, 0) : initial_cell}
+        self.path = {(0, 0) : State.SAFE_VISITED}
         self.agent = Agent(0, 0, Direction.NORTH)
 
         self.stench = set()
@@ -321,7 +312,7 @@ class RelativeMap():
 
         mid = floor(size / 2)
 
-        for coordinate, cell in self.path.items():
+        for coordinate, state in self.path.items():
             x, y = coordinate
             symbols = [ "·" for x in range(9) ]
 
@@ -344,19 +335,19 @@ class RelativeMap():
             symbols[4] = "?"
             symbols[5] = " "
 
-            if cell.state == State.WUMPUS:
+            if state == State.WUMPUS:
                 symbols[3] = "-"
                 symbols[4] = "W"
                 symbols[5] = "-"
-            elif cell.state == State.PORTAL:
+            elif state == State.PORTAL:
                 symbols[4] = "O"
-            elif cell.state == State.UNSAFE:
+            elif state == State.UNSAFE:
                 symbols[3] = "-"
                 symbols[4] = "U"
                 symbols[5] = "-"
-            elif cell.state == State.SAFE_VISITED:
+            elif state == State.SAFE_VISITED:
                 symbols[4] = "S"
-            elif cell.state == State.SAFE_UNVISITED:
+            elif state == State.SAFE_UNVISITED:
                 symbols[4] = "s"
 
             if self.agent.x == x and self.agent.y == y:
@@ -370,7 +361,7 @@ class RelativeMap():
                 if self.agent.percept.scream:
                     symbols[8] = "@"
 
-            if cell.state == State.WALL:
+            if state == State.WALL:
                 symbols = [ "#" for x in range(9) ]
 
             px = (mid + x) * 3
