@@ -11,6 +11,6 @@
 
 `python3 TeamJiji-Driver.py [relative path to agent]` 
 
-eg. `python3 main.py TeamABC-Agent.pl`
+eg. `python3 TeamJiji-Driver.py TeamABC-Agent.pl`
 
 Alternatively, you can add your agent to `data/` folder with the name `agent.pl` or modify `TeamJiji-Driver.py` to default to the path to your agent.
