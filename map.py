@@ -17,6 +17,7 @@ class State(Enum):
     PORTAL          = 4
     COIN            = 5
     WALL            = 6
+    UNSAFE          = 7
 
 class Direction(Enum):
     NORTH   = 0
@@ -318,6 +319,10 @@ class RelativeMap():
                 symbols[5] = "-"
             elif cell.state == State.PORTAL:
                 symbols[4] = "O"
+            elif cell.state == State.UNSAFE:
+                symbols[3] = "-"
+                symbols[4] = "U"
+                symbols[5] = "-"
             elif cell.state == State.SAFE_VISITED:
                 symbols[4] = "S"
             elif cell.state == State.SAFE_UNVISITED:

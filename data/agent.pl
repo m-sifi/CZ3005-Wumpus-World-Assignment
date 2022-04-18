@@ -7,6 +7,7 @@
     tingle/2,
     glitter/2,
     stentch/2,
+    safe/2,
 
     current/3,
     visited/2,
@@ -66,18 +67,32 @@ move(turnright, _) :-
 reposition(L) :- 
     handle_percept(L).
 
-safe(X, Y) :-
-    \+ wumpus(X, Y),
-    \+ confundus(X, Y),
-    \+ wall(X, Y).
+% safe(X, Y) :-
+%     visited(X, Y),
+%     adjacent(X, Y, X1, Y1),
+%     is_safe(X, Y),
+%     is_safe(X1, Y1).
+
+% % safe(X, Y) :-
+% %     is_safe(X, Y).
+
+% is_safe(X, Y) :-
+%     \+ wumpus(X, Y),
+%     \+ confundus(X, Y),
+%     \+ wall(X, Y).
+
+adjacent(X, Y, XR, Y) :- XR is X+1.
+adjacent(X, Y, X, YU) :- YU is Y+1.
+adjacent(X, Y, X, YD) :- YD is Y-1.
+adjacent(X, Y, XL, Y) :- XL is X-1.
+adjacent(X, Y, XR, Y) :- XR is X+1.
 
 explore(L) :-
     current(X, Y, D),
     explore_r(20, X, Y, D, [], L).
 
 explore_r(Count, X, Y, D, Visited, []) :-
-    \+ visited(X, Y), safe(X, Y), !.
-
+    \+ visited(X, Y), safe(X, Y),  !.
 
 explore_r(Count, X, Y, D, Visited, Path) :-
     \+ memberchk((X, Y, D), Visited),
@@ -85,12 +100,12 @@ explore_r(Count, X, Y, D, Visited, Path) :-
     Count1 is Count - 1, Count1 >= 0, !,
     explore_move(Count1, X, Y, D, [(X, Y, D)|Visited], Path).
 
-explore_move(Count, X, Y, D, Visited, [turnleft|Path]) :-
-    execute(turnleft, X, Y, D, X1, Y1, D1),
-    explore_r(Count, X1, Y1, D1, Visited, Path).
-
 explore_move(Count, X, Y, D, Visited, [turnright|Path]) :-
     execute(turnright, X, Y, D, X1, Y1, D1),
+    explore_r(Count, X1, Y1, D1, Visited, Path).
+
+explore_move(Count, X, Y, D, Visited, [turnleft|Path]) :-
+    execute(turnleft, X, Y, D, X1, Y1, D1),
     explore_r(Count, X1, Y1, D1, Visited, Path).
 
 explore_move(Count, X, Y, D, Visited, [moveforward|Path]) :-
@@ -101,15 +116,10 @@ explore_move(Count, X, Y, D, Visited, [moveforward|Path]) :-
 % Mapping 
 %
 
-possible(moveforward, X, Y, D) :-
-    execute(moveforward, X, Y, D, X1, Y1, D1),
-    safe(X1, Y1), visited(X1, Y1).
-
-possible(turnleft, _, _, _).
-
 update_agent(on) :-
     current(X, Y, D),
     execute(moveforward, X, Y, D, X1, Y1, _),
+    assertz(visited(X, Y)),
     assertz(wall(X1, Y1)).
 
 update_agent(off) :-
@@ -167,7 +177,8 @@ confound(on) :-
     retractall(glitter(_, _)),
     retractall(stench(_, _)),
     retractall(wall(_, _)),
-
+    retractall(safe(_, _)),
+    
     assertz(current(0, 0, rnorth)),
     assertz(visited(0, 0)).
 
@@ -227,11 +238,13 @@ bump(off).
 scream(on) :- retractall(wumpus(_, _)).
 scream(off).
 
-assume_wumpus(on, X, Y) :- assertz(wumpus(X, Y)).
-assume_wumpus(off, X, Y) :- retractall(wumpus(X, Y)).
+assume_wumpus(on, X, Y) :- \+ visited(X, Y), retractall(safe(X, Y)), assertz(wumpus(X, Y)).
+assume_wumpus(on, X, Y) :- visited(X, Y).
+assume_wumpus(off, X, Y) :- assertz(safe(X, Y)), retractall(wumpus(X, Y)).
 
-assume_portal(on, X, Y) :- assertz(confundus(X, Y)).
-assume_portal(off, X, Y) :- retractall(confundus(X, Y)).
+assume_portal(on, X, Y) :- \+ visited(X, Y), retractall(safe(X, Y)), assertz(confundus(X, Y)).
+assume_portal(on, X, Y) :- visited(X, Y).
+assume_portal(off, X, Y) :- assertz(safe(X, Y)), retractall(confundus(X, Y)).
 
 assume_glitter(on, X, Y) :- assertz(glitter(X, Y)).
 assume_glitter(off, X, Y) :- retractall(glitter(X, Y)).

@@ -1,4 +1,5 @@
 from random import randint
+from re import sub
 from map import *
 from pyswip.easy import *
 from pyswip import Prolog
@@ -26,9 +27,15 @@ class WumpusDriver():
             percept = self.map.percept(self.map.agent.x, self.map.agent.y)
             percept.confounded = True
 
-        list(self.prolog.query(f"move(moveforward, {percept})"))
+        if self.map.data[forward_y][forward_x] == EntityType.WUMPUS:
+            percept = Percept()
+            percept.confounded = True
 
-        # Update Relative Map
+            self.restart()
+            # self.update(percept)
+            return
+
+        list(self.prolog.query(f"move(moveforward, {percept})"))
         self.update(percept)
 
     def shoot(self):
@@ -68,7 +75,7 @@ class WumpusDriver():
 
     def explore(self):
         try:
-            path = list(self.prolog.query(f"once(explore(L))"))[-1]["L"]
+            path = list(self.prolog.query(f"once(explore(L))"))[0]["L"]
             print(path)
 
             for action in path:
@@ -84,7 +91,8 @@ class WumpusDriver():
 
                 self.pickup_coin()
         except:
-            print(list(self.prolog.query(f"glitter(X, Y)")))
+            # print(list(self.prolog.query(f"glitter(X, Y)")))
+            pass
 
     def turn_left(self):
         percept = self.map.percept(self.map.agent.x, self.map.agent.y)
@@ -101,16 +109,13 @@ class WumpusDriver():
         self.update(percept)
 
     def update(self, percept):
-        # self.plf_visited()
-        self.pl_wumpus()
-        self.pl_portal()
+        self.pl_safe()
+        self.pl_unsafe()
+        # self.pl_wumpus()
+        # self.pl_portal()
         self.pl_wall()
         self.pl_current()
-        self.pl_safe()
-
-        # self.pl_listing("visited(X, Y)")
-        # self.pl_listing("confundus(X, Y)")
-        # self.pl_listing("wumpus(X, Y)")
+        
 
         cell = Cell(percept)
         self.relative.path[(self.relative.agent.x, self.relative.agent.y)] = cell
@@ -191,18 +196,40 @@ class WumpusDriver():
         q.closeQuery()
 
     def pl_safe(self):
-        adjacent = self.relative.adjacent()
+        query = list(self.prolog.query("safe(X, Y)"))
+        subquery = list(self.prolog.query("visited(X, Y)"))
 
-        for x, y in adjacent:
-            if self.safe(x, y):
-                cell = Cell(state=State.SAFE_UNVISITED)
-                self.relative.path[(x, y)] = cell
+        for result in query:
+            x = result["X"]
+            y = result["Y"]
+            cell = Cell(state=State.SAFE_UNVISITED)
 
-        for coordinate, cell in self.relative.path.items():
-            x, y = coordinate
+            if result in subquery:
+                cell = Cell(state=State.SAFE_VISITED)
 
-            if self.visited(x, y):
-                cell.state = State.SAFE_VISITED
+            self.relative.path[(x, y)] = cell
+
+    def pl_unsafe(self):
+        query = list(self.prolog.query("wumpus(X, Y)"))
+        subquery = list(self.prolog.query("confundus(X, Y)"))
+
+        for result in query:
+            x = result["X"]
+            y = result["Y"]
+            cell = Cell(state=State.WUMPUS)
+
+            if result in subquery:
+                cell = Cell(state=State.UNSAFE)
+
+            self.relative.path[(x, y)] = cell
+
+        for result in subquery:
+            x = result["X"]
+            y = result["Y"]
+
+            if (x, y) not in self.relative.path:
+                self.relative.path[(x, y)] = Cell(state=State.PORTAL)
+
 
     # def pl_unsafe(self):
  
