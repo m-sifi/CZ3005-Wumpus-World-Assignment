@@ -35,8 +35,8 @@
 
 reborn :- 
     reposition([on, off, off, off, off, off]),
-    retractall(agent_arrow),
-    assertz(agent_arrow).
+    retractall(hasarrow),
+    assertz(hasarrow).
 
 move(moveforward, [Confounded, Stench, Tingle, Glitter, Bump, Scream]) :-
     update_agent(Bump),

@@ -1,5 +1,4 @@
 from random import randint
-from re import sub
 from map import *
 from pyswip.easy import *
 from pyswip import Prolog
@@ -27,7 +26,7 @@ class WumpusDriver():
             percept = self.map.percept(self.map.agent.x, self.map.agent.y)
             percept.confounded = True
 
-        if self.map.data[forward_y][forward_x] == EntityType.WUMPUS:
+        if self.map.has_wumpus(forward_x, forward_y):
             percept = Percept()
             percept.confounded = True
 
@@ -40,17 +39,16 @@ class WumpusDriver():
 
     def shoot(self):
         percept = self.map.percept(self.map.agent.x, self.map.agent.y)
-
         if self.map.agent.arrow:
             x = self.map.agent.x
             y = self.map.agent.y
             direction = self.map.agent.direction
 
             while self.map.is_valid(x, y):
-                if self.map.data[y][x] == EntityType.WUMPUS:
-                    if self.map.status[(x, y)] == True:
-                        self.map.status[(x, y)] = False
-                        percept.scream = True
+                if self.map.has_wumpus(x, y):
+                    self.map.wumpus[(x, y)] = False
+                    percept.scream = True
+                    break
 
                 x, y = self.map.get_forward(x, y, direction)
 
@@ -62,12 +60,8 @@ class WumpusDriver():
         percept = self.map.percept(self.map.agent.x, self.map.agent.y)
 
         if percept.glitter:
-            for y in range(self.map.height):
-                for x in range(self.map.height):
-                    if self.map.data[y][x] == EntityType.COIN:
-                        if self.map.status[(x, y)] == True:
-                            percept.glitter = False
-                            self.map.status[(x, y)] = False
+            percept.glitter = False
+            self.map.coin[(self.map.agent.x, self.map.agent.y)] = False
 
         list(self.prolog.query(f"move(pickup, {percept})"))
         # Update Relative Map
@@ -111,11 +105,11 @@ class WumpusDriver():
     def update(self, percept):
         self.pl_safe()
         self.pl_unsafe()
+        self.pl_percept()
         # self.pl_wumpus()
         # self.pl_portal()
         self.pl_wall()
         self.pl_current()
-        
 
         cell = Cell(percept)
         self.relative.path[(self.relative.agent.x, self.relative.agent.y)] = cell
@@ -263,20 +257,24 @@ class WumpusDriver():
             
         q.closeQuery()
 
-    def pl_portal(self):
-        confundus = Functor("confundus", 2)
-        X = Variable()
-        Y = Variable()
+    def pl_percept(self):
+        stench = list(self.prolog.query("stench(X, Y)"))
+        glitter = list(self.prolog.query("glitter(X, Y)"))
+        tingle = list(self.prolog.query("tingle(X, Y)"))
 
-        q = Query(confundus(X, Y))
+        self.relative.stench.clear()
+        self.relative.glitter.clear()
+        self.relative.tingle.clear()
 
-        while q.nextSolution():
-            x, y = X.value, Y.value
+        for item in stench:
+            self.relative.stench.add((item["X"], item["Y"]))
 
-            cell = Cell(state=State.PORTAL)
-            self.relative.path[(X.value, Y.value)] = cell
-            
-        q.closeQuery()
+        for item in glitter:
+            self.relative.glitter.add((item["X"], item["Y"]))
+
+        for item in tingle:
+            self.relative.tingle.add((item["X"], item["Y"]))
+
 
     def safe(self, x, y):
         return bool(list(self.prolog.query(f"safe({x}, {y})")))
