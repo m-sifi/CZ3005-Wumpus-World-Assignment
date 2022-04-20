@@ -25,19 +25,6 @@ def print_help():
     print_command("pickup / p")
     print()
 
-def move_forward(world: Map):
-    prolog = Prolog()
-    pl_move = Functor("move", 2)
-    percept = world.percept(world.agent.x, world.agent.y)
-
-    forward_x, forward_y = world.agent_forward()
-
-    if world.data[forward_y][forward_x] == EntityType.WALL:
-        percept.bump = True
-
-    list(prolog.query(f"move(moveforward, {percept})"))
-    return percept
-
 if __name__ == "__main__":
 
     world = Map()
@@ -51,6 +38,7 @@ if __name__ == "__main__":
     world.reset() # Resets put the agent at start position
 
     agent = "data/agent.pl"
+
 
     if len(sys.argv) > 1:
         agent = sys.argv[1]

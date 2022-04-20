@@ -6,7 +6,7 @@
     confundus/2,
     tingle/2,
     glitter/2,
-    stentch/2,
+    stench/2,
     safe/2,
 
     current/3,
@@ -67,25 +67,9 @@ move(turnright, _) :-
 reposition(L) :- 
     handle_percept(L).
 
-% safe(X, Y) :-
-%     visited(X, Y),
-%     adjacent(X, Y, X1, Y1),
-%     is_safe(X, Y),
-%     is_safe(X1, Y1).
-
-% % safe(X, Y) :-
-% %     is_safe(X, Y).
-
-% is_safe(X, Y) :-
-%     \+ wumpus(X, Y),
-%     \+ confundus(X, Y),
-%     \+ wall(X, Y).
-
-adjacent(X, Y, XR, Y) :- XR is X+1.
-adjacent(X, Y, X, YU) :- YU is Y+1.
-adjacent(X, Y, X, YD) :- YD is Y-1.
-adjacent(X, Y, XL, Y) :- XL is X-1.
-adjacent(X, Y, XR, Y) :- XR is X+1.
+%
+% Planning
+%
 
 explore(L) :-
     current(X, Y, D),
@@ -145,15 +129,15 @@ execute(moveforward, X, Y, rwest, X1, Y1, rwest) :-
     X1 is X - 1, 
     Y1 is Y.
 
-execute(turnright, X, Y, rnorth, X, Y, D) :- D = reast.
-execute(turnright, X, Y, reast, X, Y, D) :- D = rsouth.
-execute(turnright, X, Y, rsouth, X, Y, D) :- D = rwest.
-execute(turnright, X, Y, rwest, X, Y, D) :- D = rnorth.
+execute(turnright, X, Y, rnorth, X, Y, reast).
+execute(turnright, X, Y, reast, X, Y, rsouth).
+execute(turnright, X, Y, rsouth, X, Y, rwest).
+execute(turnright, X, Y, rwest, X, Y, rnorth).
 
-execute(turnleft, X, Y, rnorth, X, Y, D) :- D = rwest.
-execute(turnleft, X, Y, rwest, X, Y, D) :- D = rsouth.
-execute(turnleft, X, Y, rsouth, X, Y, D) :- D = reast.
-execute(turnleft, X, Y, reast, X, Y, D) :- D = rnorth.
+execute(turnleft, X, Y, rnorth, X, Y, rwest).
+execute(turnleft, X, Y, rwest, X, Y, rsouth).
+execute(turnleft, X, Y, rsouth, X, Y, reast).
+execute(turnleft, X, Y, reast, X, Y, rnorth).
 
 % 
 % Perceptors Handler
@@ -248,13 +232,3 @@ assume_portal(off, X, Y) :- assertz(safe(X, Y)), retractall(confundus(X, Y)).
 
 assume_glitter(on, X, Y) :- assertz(glitter(X, Y)).
 assume_glitter(off, X, Y) :- retractall(glitter(X, Y)).
-
-% 
-% Utilities
-%
-
-distance(X1, Y1, X2, Y2, Distance) :-
-    Distance is abs(X2 - X1) + abs(Y2 - Y1).
-
-hash(X, Y, H) :-
-    H is (X * 100) + Y.
