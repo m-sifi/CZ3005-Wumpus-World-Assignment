@@ -66,8 +66,13 @@ class WumpusDriver():
         self.update(percept)
 
     def explore(self):
+
+        self.pl_listing("safe(X, Y), \+ visited(X, Y), \+ wall(X, Y)")
+        self.pl_listing("safe(X, Y)")
+        self.pl_listing("wumpus(X, Y), confundus(X, Y)")
+
         try:
-            path = list(self.prolog.query(f"once(explore(L))"))[0]["L"]
+            path = list(self.prolog.query(f"explore(L)"))[0]["L"]
             print(path)
 
             for action in path:
@@ -169,35 +174,38 @@ class WumpusDriver():
         q.closeQuery()
 
     def pl_safe(self):
-        query = list(self.prolog.query("safe(X, Y)"))
-        subquery = list(self.prolog.query("visited(X, Y)"))
+        safe = list(self.prolog.query("safe(X, Y)"))
+        unvisited = list(self.prolog.query("safe(X, Y), \+ visited(X, Y), \+ wall(X, Y)"))
 
-        for result in query:
+        for result in safe:
+            x = result["X"]
+            y = result["Y"]
+            self.relative.path[(x, y)] = State.SAFE_VISITED
+
+        for result in unvisited:
             x = result["X"]
             y = result["Y"]
             self.relative.path[(x, y)] = State.SAFE_UNVISITED
 
-            if result in subquery:
-                self.relative.path[(x, y)] = State.SAFE_VISITED
-
     def pl_unsafe(self):
-        query = list(self.prolog.query("wumpus(X, Y)"))
-        subquery = list(self.prolog.query("confundus(X, Y)"))
+        wumpus = list(self.prolog.query("wumpus(X, Y)"))
+        confundus = list(self.prolog.query("confundus(X, Y)"))
+        unsafe = list(self.prolog.query("wumpus(X, Y), confundus(X, Y)"))
 
-        for result in query:
+        for result in wumpus:
             x = result["X"]
             y = result["Y"]
             self.relative.path[(x, y)] = State.WUMPUS
 
-            if result in subquery:
-                self.relative.path[(x, y)] = State.UNSAFE
-
-        for result in subquery:
+        for result in confundus:
             x = result["X"]
             y = result["Y"]
+            self.relative.path[(x, y)] = State.PORTAL
 
-            if (x, y) not in self.relative.path:
-                self.relative.path[(x, y)] = State.PORTAL
+        for result in unsafe:
+            x = result["X"]
+            y = result["Y"]
+            self.relative.path[(x, y)] = State.UNSAFE
 
     def pl_wall(self):
         query = list(self.prolog.query("wall(X, Y)"))
