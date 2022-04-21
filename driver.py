@@ -67,9 +67,7 @@ class WumpusDriver():
 
     def explore(self):
 
-        self.pl_listing("safe(X, Y), \+ visited(X, Y), \+ wall(X, Y)")
-        self.pl_listing("safe(X, Y)")
-        self.pl_listing("wumpus(X, Y), confundus(X, Y)")
+        self.pl_listing("safe_unvisited(X, Y)")
 
         try:
             path = list(self.prolog.query(f"explore(L)"))[0]["L"]

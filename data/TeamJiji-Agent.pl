@@ -76,6 +76,11 @@ is_safe(X, Y) :-
     \+ wumpus(X, Y),
     \+ confundus(X, Y).
 
+safe_unvisited(X, Y) :-
+    safe(X, Y),
+    \+ visited(X, Y),
+    \+ wall(X, Y).
+
 flatten2([], []) :- !.
 flatten2([L|Ls], FlatL) :-
     !,
@@ -90,14 +95,12 @@ explore(L) :-
     flatten2(L0, L).
 
 explore_r(0, 0, D, Visited, []) :-
-    findall(1, (safe(A, B), visited(A, B), \+ wall(A, B)), L),
-    findall(1, glitter(_, _), L1),
-    length(L, 0),
-    length(L1, 0), !.
+    aggregate_all(count, safe_unvisited(_, _), 0),
+    aggregate_all(count, glitter(_, _), 0), !.
 
 explore_r(X, Y, D, Visited, []) :-
+    aggregate_all(count, safe_unvisited(_, _), Count),
     is_safe(X, Y), \+ visited(X, Y), \+ wall(X, Y), !.
-
 
 % explore_r(Count, X, Y, D, Visited, []) :-
 %     not((safe(X, Y), \+ visited(X, Y), \+ wall(X, Y))),
