@@ -79,8 +79,12 @@ class WumpusDriver():
                     self.turn_left()
                 elif action == "turnright":
                     self.turn_right()
+
+            return path
         except:
             print("explore(L) returned nothing")
+        
+        return []
 
     def turn_left(self):
         percept = self.map.percept(self.map.agent.x, self.map.agent.y)

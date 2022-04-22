@@ -2,7 +2,7 @@
     "files.exclude": {
         "**/.git": true,
         "**/.svn": true,
-        "**/.hg": true,
+        "**/.hg": false,
         "**/CVS": true,
         "**/.DS_Store": true,
         "**/Thumbs.db": true,
