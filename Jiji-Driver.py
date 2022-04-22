@@ -37,8 +37,7 @@ if __name__ == "__main__":
     world.agent_start = Agent(1, 1, Direction.NORTH)
     world.reset() # Resets put the agent at start position
 
-    agent = "data/agent.pl"
-
+    agent = "data/Jiji-Agent.pl"
 
     if len(sys.argv) > 1:
         agent = sys.argv[1]
@@ -55,7 +54,7 @@ if __name__ == "__main__":
         action = input("> ") \
                     .strip()
 
-        print() # nl
+        print(f"You have entered '{action}\n") # nl
 
         # Driver Commands
         if action in ["quit", "q"]:
@@ -67,21 +66,28 @@ if __name__ == "__main__":
 
         # Agent Commands
         elif action in ["turnright", "tr", "r"]:
+            print("Action: Agent turn right")
             driver.turn_right()
         elif action in ["turnleft", "tl", "l"]:
+            print("Action: Agent turn left")
             driver.turn_left()
-            pass
         elif action in ["moveforward", "move", "f"]:
+            print("Action: Agent move forward")
             driver.move_forward()
+            print(driver.map)
         elif action in ["explore", "e"]:
+            print("Action: Agent explore")
             driver.explore()
+            print(driver.map)
         elif action in ["shoot", "s"]:
+            print("Action: Agent shoot arrow")
             driver.shoot()
         elif action in ["pickup", "p"]:
+            print("Action: Agent pickup coin (if any)")
             driver.pickup_coin()
 
         # Misc
         else:
-            print("Invalid command")
+            print("Invalid action")
 
 

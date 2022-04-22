@@ -244,7 +244,7 @@ class Map():
                     for w in range(3):
                         pixels[__y + z][__x + w] = symbols[z * 3 + w]
 
-        repr = "== Absolute Map ==\n"
+        repr = "\n== Absolute Map ==\n"
         for row in pixels:
             repr += " ".join(row) + "\n"
 
@@ -301,8 +301,8 @@ class RelativeMap():
             Xs.append(x)
             Ys.append(y)
             
-        width = ((max(Xs) + 1) * 2) + 1
-        height = ((max(Ys) + 1) * 2) + 1
+        width = ((max(Xs) + 2) * 2) + 1
+        height = ((max(Ys) + 2) * 2) + 1
 
         return width if width > height else height
 

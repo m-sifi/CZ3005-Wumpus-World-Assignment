@@ -18,18 +18,20 @@ class WumpusDriver():
         percept = self.map.percept(forward_x, forward_y)
 
         if self.map.data[forward_y][forward_x] == EntityType.WALL:
+            print("Agent bumped into a wall, ouch!")
             percept = self.map.percept(self.map.agent.x, self.map.agent.y)
             percept.bump = True
 
         if self.map.data[forward_y][forward_x] == EntityType.PORTAL:
+            print("Agent stepped into a Portal and is confused?")
             self.reset()
             percept = self.map.percept(self.map.agent.x, self.map.agent.y)
             percept.confounded = True
 
         if self.map.has_wumpus(forward_x, forward_y):
+            print("Agent stepped into a Wumpus and died of shock. Restarting world..")
             percept = Percept()
             percept.confounded = True
-
             self.restart()
             return
 
@@ -66,9 +68,6 @@ class WumpusDriver():
         self.update(percept)
 
     def explore(self):
-
-        self.pl_listing("safe_unvisited(X, Y)")
-
         try:
             path = list(self.prolog.query(f"explore(L)"))[0]["L"]
             print(path)

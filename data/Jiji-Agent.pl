@@ -71,8 +71,10 @@ reposition(L) :-
 % Planning
 %
 
-is_safe(X, Y) :-
+safe_visited(X, Y) :-
     safe(X, Y),
+    visited(X, Y),
+    \+ wall(X, Y),
     \+ wumpus(X, Y),
     \+ confundus(X, Y).
 
@@ -100,7 +102,7 @@ explore_r(0, 0, D, Visited, []) :-
 
 explore_r(X, Y, D, Visited, []) :-
     aggregate_all(count, safe_unvisited(_, _), Count),
-    is_safe(X, Y), \+ visited(X, Y), \+ wall(X, Y), !.
+    safe_unvisited(X, Y), !.
 
 % explore_r(Count, X, Y, D, Visited, []) :-
 %     not((safe(X, Y), \+ visited(X, Y), \+ wall(X, Y))),
@@ -111,25 +113,14 @@ explore_r(X, Y, D, Visited, []) :-
 
 explore_r(X, Y, D, Visited, Path) :-
     \+ memberchk((X, Y), Visited),
-    is_safe(X, Y),
-    visited(X, Y),
-    \+ wall(X, Y),
+    safe_visited(X, Y),
+    glitter(X, Y),
+    explore_move(X, Y, D, [(X, Y)|Visited], [pickup, Path]).
+
+explore_r(X, Y, D, Visited, Path) :-
+    \+ memberchk((X, Y), Visited),
+    safe_visited(X, Y),
     explore_move(X, Y, D, [(X, Y)|Visited], Path).
-
-% explore_move(X, Y, D, Visited, [turnright, moveforward|Path]) :-
-%     execute(turnright, X, Y, D, X1, Y1, D1),
-%     execute(moveforward, X1, Y1, D1, X2, Y2, D2),
-%     explore_r(X2, Y2, D2, Visited, Path).
-
-% explore_move(X, Y, D, Visited, [turnleft, moveforward|Path]) :-
-%     execute(turnleft, X, Y, D, X1, Y1, D1),
-%     execute(moveforward, X1, Y1, D1, X2, Y2, D2),
-%     explore_r(X2, Y2, D2, Visited, Path).
-
-% explore_move(X, Y, D, Visited, [moveforward|Path]) :-
-%     execute(moveforward, X, Y, D, X1, Y1, D1),
-%     is_safe(X1, Y1),
-%     explore_r(X1, Y1, D1, Visited, Path).
 
 explore_move(X, Y, D, Visited, [Actions, moveforward |Path]) :-
     face_north(X, Y, D, Actions),
